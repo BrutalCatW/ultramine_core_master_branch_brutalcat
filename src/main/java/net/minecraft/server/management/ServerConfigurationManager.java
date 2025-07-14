@@ -453,105 +453,80 @@ public abstract class ServerConfigurationManager
 	}
 
 	public EntityPlayerMP respawnPlayer(EntityPlayerMP p_72368_1_, int p_72368_2_, boolean p_72368_3_)
-	{
-		int oldDim = p_72368_1_.dimension;
-		WorldServer oldWorld = mcServer.getMultiWorld().getWorldByID(oldDim);
-		boolean respawnOnBed = (getServerInstance().isSinglePlayer() || ConfigurationHandler.getServerConfig().settings.spawnLocations.respawnOnBed);
-		WarpLocation spawn = null;
-		if(oldWorld.getConfig().settings.respawnOnWarp != null)
-			spawn = getDataLoader().getWarp(oldWorld.getConfig().settings.respawnOnWarp);
-		
-		if(spawn == null)
-		{
-			WarpLocation spawnWarp = getDataLoader().getWarp(getServerInstance().isSinglePlayer() ? "spawn" : ConfigurationHandler.getServerConfig().settings.spawnLocations.deathSpawn);
-			spawn = (spawnWarp != null ? spawnWarp : getDataLoader().getWarp("spawn"));
-		}
-		
-		spawn = spawn.randomize();
-		
-		World world = mcServer.worldServerForDimension(p_72368_2_);
-		if (world == null)
-		{
-			p_72368_2_ = 0;
-		}
-		else if (!world.provider.canRespawnHere())
-		{
-			p_72368_2_ = world.provider.getRespawnDimension(p_72368_1_);
-		}
+    {
+        World world = mcServer.worldServerForDimension(p_72368_2_);
+        if (world == null)
+         {
+            p_72368_2_ = 0;
+         }
+        else if (!world.provider.canRespawnHere())
+         {
+            p_72368_2_ = world.provider.getRespawnDimension(p_72368_1_);
+         }
+        p_72368_1_.getServerForPlayer().getEntityTracker().removePlayerFromTrackers(p_72368_1_);
+        p_72368_1_.getServerForPlayer().getEntityTracker().removeEntityFromAllTrackingPlayers(p_72368_1_);
+        p_72368_1_.getServerForPlayer().getPlayerManager().removePlayer(p_72368_1_);
+        this.playerEntityList.remove(p_72368_1_);
+        this.mcServer.worldServerForDimension(p_72368_1_.dimension).removePlayerEntityDangerously(p_72368_1_);
+        ChunkCoordinates chunkcoordinates = p_72368_1_.getBedLocation(p_72368_2_);
+        boolean flag1 = p_72368_1_.isSpawnForced(p_72368_2_);
+        p_72368_1_.dimension = p_72368_2_;
+         Object object;
+ 
+         if (this.mcServer.isDemo())
+         {
+            object = new DemoWorldManager(this.mcServer.worldServerForDimension(p_72368_1_.dimension));
+         }
+         else
+         {
+            object = new ItemInWorldManager(this.mcServer.worldServerForDimension(p_72368_1_.dimension));
+         }
+ 
+        EntityPlayerMP entityplayermp1 = new EntityPlayerMP(this.mcServer, this.mcServer.worldServerForDimension(p_72368_1_.dimension), p_72368_1_.getGameProfile(), (ItemInWorldManager)object);
+        entityplayermp1.playerNetServerHandler = p_72368_1_.playerNetServerHandler;
+        entityplayermp1.clonePlayer(p_72368_1_, p_72368_3_);
+        entityplayermp1.dimension = p_72368_2_;
+        entityplayermp1.setEntityId(p_72368_1_.getEntityId());
+        WorldServer worldserver = this.mcServer.worldServerForDimension(p_72368_1_.dimension);
+        this.func_72381_a(entityplayermp1, p_72368_1_, worldserver);
 
-		p_72368_1_.getServerForPlayer().getEntityTracker().removePlayerFromTrackers(p_72368_1_);
-		p_72368_1_.getServerForPlayer().getEntityTracker().removeEntityFromAllTrackingPlayers(p_72368_1_);
-		p_72368_1_.getServerForPlayer().getPlayerManager().removePlayer(p_72368_1_);
-		this.playerEntityList.remove(p_72368_1_);
-		this.mcServer.worldServerForDimension(p_72368_1_.dimension).removePlayerEntityDangerously(p_72368_1_);
-		ChunkCoordinates chunkcoordinates = respawnOnBed ? p_72368_1_.getBedLocation(p_72368_2_) : null;
-		if(chunkcoordinates == null)
-			p_72368_2_ = spawn.dimension;
-		boolean flag1 = p_72368_1_.isSpawnForced(p_72368_2_);
-		p_72368_1_.dimension = p_72368_2_;
-		Object object;
-
-		if (this.mcServer.isDemo())
-		{
-			object = new DemoWorldManager(this.mcServer.worldServerForDimension(p_72368_1_.dimension));
-		}
-		else
-		{
-			object = new ItemInWorldManager(this.mcServer.worldServerForDimension(p_72368_1_.dimension));
-		}
-
-		EntityPlayerMP entityplayermp1 = new EntityPlayerMP(this.mcServer, this.mcServer.worldServerForDimension(p_72368_1_.dimension), p_72368_1_.getGameProfile(), (ItemInWorldManager)object);
-		entityplayermp1.setLocationAndAngles(spawn.x, spawn.y, spawn.z, spawn.yaw, spawn.pitch);
-		entityplayermp1.playerNetServerHandler = p_72368_1_.playerNetServerHandler;
-		entityplayermp1.clonePlayer(p_72368_1_, p_72368_3_);
-		entityplayermp1.dimension = p_72368_2_;
-		entityplayermp1.setEntityId(p_72368_1_.getEntityId());
-		WorldServer worldserver = this.mcServer.worldServerForDimension(p_72368_1_.dimension);
-		this.func_72381_a(entityplayermp1, p_72368_1_, worldserver);
-		ChunkCoordinates chunkcoordinates1;
-
-		if (chunkcoordinates != null)
-		{
-			chunkcoordinates1 = EntityPlayer.verifyRespawnCoordinates(this.mcServer.worldServerForDimension(p_72368_1_.dimension), chunkcoordinates, flag1);
-
-			if (chunkcoordinates1 != null)
-			{
-				entityplayermp1.setLocationAndAngles((double)((float)chunkcoordinates1.posX + 0.5F), (double)((float)chunkcoordinates1.posY + 0.1F), (double)((float)chunkcoordinates1.posZ + 0.5F), 0.0F, 0.0F);
-				entityplayermp1.setSpawnChunk(chunkcoordinates, flag1);
-			}
-			else
-			{
-				p_72368_2_ = spawn.dimension;
-				entityplayermp1.dimension = p_72368_2_;
-				entityplayermp1.playerNetServerHandler.sendPacket(new S2BPacketChangeGameState(0, 0.0F));
-			}
-		}
-		getDataLoader().handleRespawn(p_72368_1_, entityplayermp1, oldDim, p_72368_2_);
-
-		if(getServerInstance().isSinglePlayer())
-		{
-			worldserver.theChunkProviderServer.loadChunk((int)entityplayermp1.posX >> 4, (int)entityplayermp1.posZ >> 4);
-
-			while (!worldserver.getCollidingBoundingBoxes(entityplayermp1, entityplayermp1.boundingBox).isEmpty())
-			{
-				entityplayermp1.setPosition(entityplayermp1.posX, entityplayermp1.posY + 1.0D, entityplayermp1.posZ);
-			}
-		}
-
-		entityplayermp1.playerNetServerHandler.sendPacket(new S07PacketRespawn(entityplayermp1.dimension, entityplayermp1.worldObj.difficultySetting, entityplayermp1.worldObj.getWorldInfo().getTerrainType(), entityplayermp1.theItemInWorldManager.getGameType()));
-		chunkcoordinates1 = worldserver.getSpawnPoint();
-		entityplayermp1.playerNetServerHandler.setPlayerLocation(entityplayermp1.posX, entityplayermp1.posY, entityplayermp1.posZ, entityplayermp1.rotationYaw, entityplayermp1.rotationPitch);
-		entityplayermp1.playerNetServerHandler.sendPacket(new S05PacketSpawnPosition(chunkcoordinates1.posX, chunkcoordinates1.posY, chunkcoordinates1.posZ));
-		entityplayermp1.playerNetServerHandler.sendPacket(new S1FPacketSetExperience(entityplayermp1.experience, entityplayermp1.experienceTotal, entityplayermp1.experienceLevel));
-		this.updateTimeAndWeatherForPlayer(entityplayermp1, worldserver);
-		worldserver.getPlayerManager().addPlayer(entityplayermp1);
-		worldserver.spawnEntityInWorld(entityplayermp1);
-		this.playerEntityList.add(entityplayermp1);
-		usernameToPlayerMap.put(entityplayermp1.getGameProfile().getName().toLowerCase(), entityplayermp1);
-		entityplayermp1.addSelfToInternalCraftingInventory();
-		entityplayermp1.setHealth(entityplayermp1.getHealth());
-		FMLCommonHandler.instance().firePlayerRespawnEvent(entityplayermp1);
-		return entityplayermp1;
+         ChunkCoordinates chunkcoordinates1;
+ 
+        if (chunkcoordinates != null)
+         {
+            chunkcoordinates1 = EntityPlayer.verifyRespawnCoordinates(this.mcServer.worldServerForDimension(p_72368_1_.dimension), chunkcoordinates, flag1);
+ 
+            if (chunkcoordinates1 != null)
+             {
+                entityplayermp1.setLocationAndAngles((double)((float)chunkcoordinates1.posX + 0.5F), (double)((float)chunkcoordinates1.posY + 0.1F), (double)((float)chunkcoordinates1.posZ + 0.5F), 0.0F, 0.0F);
+                entityplayermp1.setSpawnChunk(chunkcoordinates, flag1);
+             }
+            else
+             {
+                entityplayermp1.playerNetServerHandler.sendPacket(new S2BPacketChangeGameState(0, 0.0F));
+             }
+         }
+ 
+        worldserver.theChunkProviderServer.loadChunk((int)entityplayermp1.posX >> 4, (int)entityplayermp1.posZ >> 4);
+ 
+        while (!worldserver.getCollidingBoundingBoxes(entityplayermp1, entityplayermp1.boundingBox).isEmpty())
+         {
+             entityplayermp1.setPosition(entityplayermp1.posX, entityplayermp1.posY + 1.0D, entityplayermp1.posZ);
+         }
+ 
+        entityplayermp1.playerNetServerHandler.sendPacket(new S07PacketRespawn(entityplayermp1.dimension, entityplayermp1.worldObj.difficultySetting, entityplayermp1.worldObj.getWorldInfo().getTerrainType(), entityplayermp1.theItemInWorldManager.getGameType()));
+        chunkcoordinates1 = worldserver.getSpawnPoint();
+        entityplayermp1.playerNetServerHandler.setPlayerLocation(entityplayermp1.posX, entityplayermp1.posY, entityplayermp1.posZ, entityplayermp1.rotationYaw, entityplayermp1.rotationPitch);
+         entityplayermp1.playerNetServerHandler.sendPacket(new S05PacketSpawnPosition(chunkcoordinates1.posX, chunkcoordinates1.posY, chunkcoordinates1.posZ));
+         entityplayermp1.playerNetServerHandler.sendPacket(new S1FPacketSetExperience(entityplayermp1.experience, entityplayermp1.experienceTotal, entityplayermp1.experienceLevel));
+        this.updateTimeAndWeatherForPlayer(entityplayermp1, worldserver);
+        worldserver.getPlayerManager().addPlayer(entityplayermp1);
+        worldserver.spawnEntityInWorld(entityplayermp1);
+         this.playerEntityList.add(entityplayermp1);
+         entityplayermp1.addSelfToInternalCraftingInventory();
+         entityplayermp1.setHealth(entityplayermp1.getHealth());
+         FMLCommonHandler.instance().firePlayerRespawnEvent(entityplayermp1);
+         return entityplayermp1;
 	}
 
 	public void transferPlayerToDimension(EntityPlayerMP p_72356_1_, int p_72356_2_)
