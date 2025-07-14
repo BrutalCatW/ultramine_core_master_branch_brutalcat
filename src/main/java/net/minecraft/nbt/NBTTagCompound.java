@@ -12,9 +12,9 @@ import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.ReportedException;
-import net.openhft.koloboke.collect.hash.HashConfig;
-import net.openhft.koloboke.collect.map.hash.HashObjObjMapFactory;
-import net.openhft.koloboke.collect.map.hash.HashObjObjMaps;
+import com.koloboke.collect.hash.HashConfig;
+import com.koloboke.collect.map.hash.HashObjObjMapFactory;
+import com.koloboke.collect.map.hash.HashObjObjMaps;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ultramine.server.internal.LambdaHolder;
@@ -423,7 +423,7 @@ public class NBTTagCompound extends NBTBase
 	private static final boolean USE_KOLOBOKE_MAP = Boolean.getBoolean("org.ultramine.core.nbt.useKolobokeMap");
 	private static final ThreadLocal<Boolean> LOCAL_USE_KOLOBOKE_MAP = ThreadLocal.withInitial(LambdaHolder.BOOLEAN_FALSE_SUPPLIER);
 	private static final HashObjObjMapFactory<?, ?> K_MAP_FACTORY = HashObjObjMaps.getDefaultFactory()
-			.withHashConfig(HashConfig.getDefault().withGrowFactor(1.5).withMaxLoad(1.0).withTargetLoad(0.9)); // QHash used
+			.withHashConfig(HashConfig.getDefault().withGrowthFactor(1.5).withMaxLoad(1.0).withTargetLoad(0.9)); // QHash used
 
 	public static boolean setUseKolobokeMap(boolean isUse)
 	{
