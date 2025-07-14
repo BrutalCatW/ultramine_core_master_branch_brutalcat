@@ -33,7 +33,7 @@ public class NBTFileDataProvider implements IDataProvider
 
 	private final ServerConfigurationManager mgr;
 	private File umPlayerDir;
-	private List<String> fastWarps = Collections.emptyList();
+
 	private final Map<File, CachedPlayerStruct> savingPlayersCache = new ConcurrentHashMap<>();
 	private long cachedPlayerCounter;
 
@@ -132,7 +132,6 @@ public class NBTFileDataProvider implements IDataProvider
 		if(file.exists())
 		{
 			YamlWarpList warps = YamlConfigProvider.getOrCreateConfig(file, YamlWarpList.class);
-			fastWarps = warps.fastWarps;
 			return warps.warps;
 		}
 		
@@ -151,24 +150,6 @@ public class NBTFileDataProvider implements IDataProvider
 		writeWarpList();
 	}
 	
-	@Override
-	public List<String> loadFastWarps()
-	{
-		return fastWarps;
-	}
-
-	@Override
-	public void saveFastWarp(String name)
-	{
-		writeWarpList();
-	}
-
-	@Override
-	public void removeFastWarp(String name)
-	{
-		writeWarpList();
-	}
-
 	public NBTTagCompound loadPlayer(SaveHandler sh, GameProfile player)
 	{
 		File file = getPlayerNbtFile(sh, player);
@@ -248,14 +229,12 @@ public class NBTFileDataProvider implements IDataProvider
 		File file = mgr.getServerInstance().getStorageFile("warps.yml");
 		YamlWarpList warps = new YamlWarpList();
 		warps.warps = mgr.getDataLoader().getWarps();
-		warps.fastWarps = mgr.getDataLoader().getFastWarps();
 		YamlConfigProvider.saveConfig(file, warps);
 	}
 	
 	private static class YamlWarpList
 	{
 		public Map<String, WarpLocation> warps;
-		public List<String> fastWarps;
 	}
 
 	private static class CachedPlayerStruct

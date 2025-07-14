@@ -11,7 +11,6 @@ import net.minecraft.util.StringTranslate;
 import net.minecraftforge.common.MinecraftForge;
 
 import org.ultramine.commands.CommandRegistry;
-import org.ultramine.commands.basic.FastWarpCommand;
 import org.ultramine.commands.basic.GenWorldCommand;
 import org.ultramine.commands.basic.TechCommands;
 import org.ultramine.commands.basic.VanillaCommands;
@@ -215,9 +214,6 @@ public class UltramineServerModContainer extends DummyModContainer
 			ServerDataLoader loader = MinecraftServer.getServer().getConfigurationManager().getDataLoader();
 			CommandRegistry reg = ((CommandHandler)MinecraftServer.getServer().getCommandManager()).getRegistry();
 			loader.loadCache();
-			loader.addDefaultWarps();
-			for(String name : loader.getFastWarps())
-				reg.registerCommand(new FastWarpCommand(name));
 			if(e.getSide().isServer())
 			{
 				getRecipeCache().setEnabled(ConfigurationHandler.getServerConfig().settings.other.recipeCacheEnabled);
