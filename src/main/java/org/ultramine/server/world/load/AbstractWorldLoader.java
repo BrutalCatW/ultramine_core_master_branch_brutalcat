@@ -81,6 +81,10 @@ public abstract class AbstractWorldLoader implements IWorldLoader
 	
 	protected static long toSeed(String seedstr)
 	{
+		if(seedstr == null || seedstr.trim().isEmpty())
+		{
+			return new java.util.Random().nextLong();
+		}
 		try
 		{
 			return Long.parseLong(seedstr);

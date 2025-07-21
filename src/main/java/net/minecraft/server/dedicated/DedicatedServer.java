@@ -221,7 +221,7 @@ public class DedicatedServer extends MinecraftServer implements IServer
 		String s2 = globalWConf.generation.generatorSettings;
 		long k = (new Random()).nextLong();
 
-		if (s.length() > 0)
+		if (s != null && s.trim().length() > 0)
 		{
 			try
 			{
@@ -237,6 +237,7 @@ public class DedicatedServer extends MinecraftServer implements IServer
 				k = (long)s.hashCode();
 			}
 		}
+		// If s is null, empty, or only whitespace, k remains a new random value
 
 		WorldType worldtype = WorldType.parseWorldType(s1);
 
