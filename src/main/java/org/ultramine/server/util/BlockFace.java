@@ -59,67 +59,9 @@ public enum BlockFace
 
 	public BlockFace getOppositeFace()
 	{
-		switch(this)
-		{
-		case NORTH:
-			return BlockFace.SOUTH;
-
-		case SOUTH:
-			return BlockFace.NORTH;
-
-		case EAST:
-			return BlockFace.WEST;
-
-		case WEST:
-			return BlockFace.EAST;
-
-		case UP:
-			return BlockFace.DOWN;
-
-		case DOWN:
-			return BlockFace.UP;
-
-		case NORTH_EAST:
-			return BlockFace.SOUTH_WEST;
-
-		case NORTH_WEST:
-			return BlockFace.SOUTH_EAST;
-
-		case SOUTH_EAST:
-			return BlockFace.NORTH_WEST;
-
-		case SOUTH_WEST:
-			return BlockFace.NORTH_EAST;
-
-		case WEST_NORTH_WEST:
-			return BlockFace.EAST_SOUTH_EAST;
-
-		case NORTH_NORTH_WEST:
-			return BlockFace.SOUTH_SOUTH_EAST;
-
-		case NORTH_NORTH_EAST:
-			return BlockFace.SOUTH_SOUTH_WEST;
-
-		case EAST_NORTH_EAST:
-			return BlockFace.WEST_SOUTH_WEST;
-
-		case EAST_SOUTH_EAST:
-			return BlockFace.WEST_NORTH_WEST;
-
-		case SOUTH_SOUTH_EAST:
-			return BlockFace.NORTH_NORTH_WEST;
-
-		case SOUTH_SOUTH_WEST:
-			return BlockFace.NORTH_NORTH_EAST;
-
-		case WEST_SOUTH_WEST:
-			return BlockFace.EAST_NORTH_EAST;
-
-		case SELF:
-			return BlockFace.SELF;
-		}
-
-		return BlockFace.SELF;
+		// UltraMine: Mathematical optimization - use cached lookup instead of switch
+		BlockFace opposite = OPPOSITES.get(this);
+		return opposite != null ? opposite : BlockFace.SELF;
 	}
 	
 	public BlockFace rotate(int notchCount)
@@ -130,6 +72,9 @@ public enum BlockFace
 	private static final BlockFace[] AXIS = new BlockFace[4];
 	private static final BlockFace[] RADIAL = {SOUTH, SOUTH_WEST, WEST, NORTH_WEST, NORTH, NORTH_EAST, EAST, SOUTH_EAST};
 	private static final EnumMap<BlockFace, Integer> NOTCHES = new EnumMap<BlockFace, Integer>(BlockFace.class);
+	
+	// UltraMine: Cache opposite faces for performance optimization
+	private static final EnumMap<BlockFace, BlockFace> OPPOSITES = new EnumMap<BlockFace, BlockFace>(BlockFace.class);
 
 	static
 	{
@@ -141,6 +86,27 @@ public enum BlockFace
 		{
 			AXIS[i] = RADIAL[i << 1];
 		}
+		
+		// UltraMine: Pre-cache all opposite faces for mathematical optimization
+		OPPOSITES.put(NORTH, SOUTH);
+		OPPOSITES.put(SOUTH, NORTH);
+		OPPOSITES.put(EAST, WEST);
+		OPPOSITES.put(WEST, EAST);
+		OPPOSITES.put(UP, DOWN);
+		OPPOSITES.put(DOWN, UP);
+		OPPOSITES.put(NORTH_EAST, SOUTH_WEST);
+		OPPOSITES.put(NORTH_WEST, SOUTH_EAST);
+		OPPOSITES.put(SOUTH_EAST, NORTH_WEST);
+		OPPOSITES.put(SOUTH_WEST, NORTH_EAST);
+		OPPOSITES.put(WEST_NORTH_WEST, EAST_SOUTH_EAST);
+		OPPOSITES.put(NORTH_NORTH_WEST, SOUTH_SOUTH_EAST);
+		OPPOSITES.put(NORTH_NORTH_EAST, SOUTH_SOUTH_WEST);
+		OPPOSITES.put(EAST_NORTH_EAST, WEST_SOUTH_WEST);
+		OPPOSITES.put(EAST_SOUTH_EAST, WEST_NORTH_WEST);
+		OPPOSITES.put(SOUTH_SOUTH_EAST, NORTH_NORTH_WEST);
+		OPPOSITES.put(SOUTH_SOUTH_WEST, NORTH_NORTH_EAST);
+		OPPOSITES.put(WEST_SOUTH_WEST, EAST_NORTH_EAST);
+		OPPOSITES.put(SELF, SELF);
 	}
 	
 	public static BlockFace notchToFace(int notch)
@@ -160,13 +126,14 @@ public enum BlockFace
 
 	public static BlockFace yawToFace(float yaw, boolean useSubCardinalDirections)
 	{
+		// UltraMine: Mathematical optimization - use multiplication instead of division for better performance
 		if (useSubCardinalDirections)
 		{
-			return RADIAL[Math.round(yaw / 45f) & 0x7];
+			return RADIAL[Math.round(yaw * 0.022222222f) & 0x7]; // 1/45 = 0.022222222f
 		}
 		else
 		{
-			return AXIS[Math.round(yaw / 90f) & 0x3];
+			return AXIS[Math.round(yaw * 0.011111111f) & 0x3]; // 1/90 = 0.011111111f
 		}
 	}
 }

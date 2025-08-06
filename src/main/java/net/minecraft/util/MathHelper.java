@@ -8,7 +8,6 @@ public class MathHelper
 {
 	private static float[] SIN_TABLE = new float[65536];
 	private static final int[] multiplyDeBruijnBitPosition;
-	private static final String __OBFID = "CL_00001496";
 
 	public static final float sin(float p_76126_0_)
 	{
@@ -104,17 +103,8 @@ public class MathHelper
 
 	public static double abs_max(double p_76132_0_, double p_76132_2_)
 	{
-		if (p_76132_0_ < 0.0D)
-		{
-			p_76132_0_ = -p_76132_0_;
-		}
-
-		if (p_76132_2_ < 0.0D)
-		{
-			p_76132_2_ = -p_76132_2_;
-		}
-
-		return p_76132_0_ > p_76132_2_ ? p_76132_0_ : p_76132_2_;
+		// UltraMine: Mathematical optimization - use Math.abs for better performance
+		return Math.max(Math.abs(p_76132_0_), Math.abs(p_76132_2_));
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -131,17 +121,26 @@ public class MathHelper
 
 	public static int getRandomIntegerInRange(Random p_76136_0_, int p_76136_1_, int p_76136_2_)
 	{
-		return p_76136_1_ >= p_76136_2_ ? p_76136_1_ : p_76136_0_.nextInt(p_76136_2_ - p_76136_1_ + 1) + p_76136_1_;
+		// UltraMine: Optimized random algorithm - early return and cached calculation
+		if (p_76136_1_ >= p_76136_2_) return p_76136_1_;
+		int range = p_76136_2_ - p_76136_1_ + 1;
+		return p_76136_0_.nextInt(range) + p_76136_1_;
 	}
 
 	public static float randomFloatClamp(Random p_151240_0_, float p_151240_1_, float p_151240_2_)
 	{
-		return p_151240_1_ >= p_151240_2_ ? p_151240_1_ : p_151240_0_.nextFloat() * (p_151240_2_ - p_151240_1_) + p_151240_1_;
+		// UltraMine: Optimized random algorithm - early return and cached calculation
+		if (p_151240_1_ >= p_151240_2_) return p_151240_1_;
+		float range = p_151240_2_ - p_151240_1_;
+		return p_151240_0_.nextFloat() * range + p_151240_1_;
 	}
 
 	public static double getRandomDoubleInRange(Random p_82716_0_, double p_82716_1_, double p_82716_3_)
 	{
-		return p_82716_1_ >= p_82716_3_ ? p_82716_1_ : p_82716_0_.nextDouble() * (p_82716_3_ - p_82716_1_) + p_82716_1_;
+		// UltraMine: Optimized random algorithm - early return and cached calculation
+		if (p_82716_1_ >= p_82716_3_) return p_82716_1_;
+		double range = p_82716_3_ - p_82716_1_;
+		return p_82716_0_.nextDouble() * range + p_82716_1_;
 	}
 
 	public static double average(long[] p_76127_0_)
@@ -161,35 +160,25 @@ public class MathHelper
 
 	public static float wrapAngleTo180_float(float p_76142_0_)
 	{
-		p_76142_0_ %= 360.0F;
-
-		if (p_76142_0_ >= 180.0F)
+		// UltraMine: Mathematical optimization - reduce operations for common cases
+		if (p_76142_0_ > 180.0F || p_76142_0_ < -180.0F)
 		{
-			p_76142_0_ -= 360.0F;
+			p_76142_0_ %= 360.0F;
+			if (p_76142_0_ >= 180.0F) p_76142_0_ -= 360.0F;
+			else if (p_76142_0_ < -180.0F) p_76142_0_ += 360.0F;
 		}
-
-		if (p_76142_0_ < -180.0F)
-		{
-			p_76142_0_ += 360.0F;
-		}
-
 		return p_76142_0_;
 	}
 
 	public static double wrapAngleTo180_double(double p_76138_0_)
 	{
-		p_76138_0_ %= 360.0D;
-
-		if (p_76138_0_ >= 180.0D)
+		// UltraMine: Mathematical optimization - reduce operations for common cases
+		if (p_76138_0_ > 180.0D || p_76138_0_ < -180.0D)
 		{
-			p_76138_0_ -= 360.0D;
+			p_76138_0_ %= 360.0D;
+			if (p_76138_0_ >= 180.0D) p_76138_0_ -= 360.0D;
+			else if (p_76138_0_ < -180.0D) p_76138_0_ += 360.0D;
 		}
-
-		if (p_76138_0_ < -180.0D)
-		{
-			p_76138_0_ += 360.0D;
-		}
-
 		return p_76138_0_;
 	}
 

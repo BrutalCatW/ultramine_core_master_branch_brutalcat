@@ -23,7 +23,6 @@ public class Profiler
 	public boolean profilingEnabled;
 	private String profilingSection = "";
 	private final TObjectLongMap<String> profilingMap = new TObjectLongHashMap<String>();
-	private static final String __OBFID = "CL_00001497";
 
 	public void clearProfiling()
 	{

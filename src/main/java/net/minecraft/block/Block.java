@@ -749,36 +749,67 @@ public class Block
 			vec37 = null;
 		}
 
+		// UltraMine: Block#collisionRayTrace optimization - cache closest vector and distance
 		Vec3 vec38 = null;
+		double closestDistance = Double.MAX_VALUE;
 
-		if (vec32 != null && (vec38 == null || p_149731_5_.squareDistanceTo(vec32) < p_149731_5_.squareDistanceTo(vec38)))
+		if (vec32 != null)
 		{
-			vec38 = vec32;
+			double distance = p_149731_5_.squareDistanceTo(vec32);
+			if (distance < closestDistance)
+			{
+				vec38 = vec32;
+				closestDistance = distance;
+			}
 		}
 
-		if (vec33 != null && (vec38 == null || p_149731_5_.squareDistanceTo(vec33) < p_149731_5_.squareDistanceTo(vec38)))
+		if (vec33 != null)
 		{
-			vec38 = vec33;
+			double distance = p_149731_5_.squareDistanceTo(vec33);
+			if (distance < closestDistance)
+			{
+				vec38 = vec33;
+				closestDistance = distance;
+			}
 		}
 
-		if (vec34 != null && (vec38 == null || p_149731_5_.squareDistanceTo(vec34) < p_149731_5_.squareDistanceTo(vec38)))
+		if (vec34 != null)
 		{
-			vec38 = vec34;
+			double distance = p_149731_5_.squareDistanceTo(vec34);
+			if (distance < closestDistance)
+			{
+				vec38 = vec34;
+				closestDistance = distance;
+			}
 		}
 
-		if (vec35 != null && (vec38 == null || p_149731_5_.squareDistanceTo(vec35) < p_149731_5_.squareDistanceTo(vec38)))
+		if (vec35 != null)
 		{
-			vec38 = vec35;
+			double distance = p_149731_5_.squareDistanceTo(vec35);
+			if (distance < closestDistance)
+			{
+				vec38 = vec35;
+				closestDistance = distance;
+			}
 		}
 
-		if (vec36 != null && (vec38 == null || p_149731_5_.squareDistanceTo(vec36) < p_149731_5_.squareDistanceTo(vec38)))
+		if (vec36 != null)
 		{
-			vec38 = vec36;
+			double distance = p_149731_5_.squareDistanceTo(vec36);
+			if (distance < closestDistance)
+			{
+				vec38 = vec36;
+				closestDistance = distance;
+			}
 		}
 
-		if (vec37 != null && (vec38 == null || p_149731_5_.squareDistanceTo(vec37) < p_149731_5_.squareDistanceTo(vec38)))
+		if (vec37 != null)
 		{
-			vec38 = vec37;
+			double distance = p_149731_5_.squareDistanceTo(vec37);
+			if (distance < closestDistance)
+			{
+				vec38 = vec37;
+			}
 		}
 
 		if (vec38 == null)

@@ -11,7 +11,6 @@ import net.minecraft.util.TupleIntJsonSerializable;
 public class StatFileWriter
 {
 	protected final Map field_150875_a = Maps.newConcurrentMap();
-	private static final String __OBFID = "CL_00001481";
 
 	public boolean hasAchievementUnlocked(Achievement p_77443_1_)
 	{

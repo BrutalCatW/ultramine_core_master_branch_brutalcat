@@ -16,6 +16,21 @@
         </Rewrite>
     </Appenders>
     <Loggers>
+        <!-- Reduce noise from common warnings that are not critical -->
+        <Logger name="mixin" level="WARN" additivity="true">
+            <filters>
+                <RegexFilter regex=".*@Mixin target.*client.*was not found.*" onMatch="DENY" onMismatch="NEUTRAL" />
+                <RegexFilter regex=".*Error loading class:.*client.*" onMatch="DENY" onMismatch="NEUTRAL" />
+            </filters>
+        </Logger>
+        
+        <!-- Filter LaunchWrapper duplicate warnings -->
+        <Logger name="LaunchWrapper" level="WARN" additivity="true">
+            <filters>
+                <RegexFilter regex=".*Tweak class name.*already.*visited.*" onMatch="DENY" onMismatch="NEUTRAL" />
+            </filters>
+        </Logger>
+        
         <Root level="all" includeLocation="false">
             <filters>
                 <MarkerFilter marker="NETWORK_PACKETS" onMatch="DENY" onMismatch="NEUTRAL" />

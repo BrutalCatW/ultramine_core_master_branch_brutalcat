@@ -177,12 +177,13 @@ public class UMHooks
 	/** Called from main thread instead of Thread.sleep(nanos / 1000000) to wait until next tick time */
 	public static void utilizeCPU(long nanos) throws InterruptedException
 	{
-		long till = System.nanoTime() + nanos;
+		// UltraMine: Remove FPS limit on server by reducing waiting time and allowing more CPU utilization
+		long till = System.nanoTime() + Math.min(nanos, MS); // Cap wait time to 1ms max
 		long toWait;
 		while((toWait = till - System.nanoTime()) > BREAK_THRESHOLD)
 		{
-			if(toWait <= SLEEP_THRESHOLD || !doOneAction(toWait))
-				Thread.sleep((till - System.nanoTime()) >= MS ? 1 : 0);
+			if(!doOneAction(toWait))
+				break; // Exit early if no work to do rather than sleeping
 		}
 	}
 

@@ -133,7 +133,8 @@ public abstract class MobSpawner
 			entity.setLocationAndAngles(x + 0.5, y, z + 0.5, world.rand.nextFloat() * 360.0F, 0.0F);
 
 			Result canSpawn = ForgeEventFactory.canEntitySpawn(entity, world, x + 0.5F, y, z + 0.5F);
-			if(canSpawn == Result.ALLOW || (canSpawn == Result.DEFAULT && entity.getCanSpawnHere()))
+			// UltraMine: Algorithmic optimization - check common case first
+			if(canSpawn == Result.DEFAULT && entity.getCanSpawnHere() || canSpawn == Result.ALLOW)
 			{
 				world.spawnEntityInWorld(entity);
 				data = creatureSpecificInit(data, entity, x, y, z);
@@ -161,8 +162,9 @@ public abstract class MobSpawner
 		if(set.minPlayerDistance > 0 && world.getClosestPlayer(x, y, z, set.minPlayerDistance) != null)
 			return false;
 		Block block = world.getBlockIfExists(x, y, z);
-		return (!block.isNormalCube() && (block.getMaterial() == type.getCreatureMaterial() || block == Blocks.snow_layer && type == EnumCreatureType.monster)) &&
-				(type == EnumCreatureType.ambient || SpawnerAnimals.canCreatureTypeSpawnAtLocation(type, world, x, y, z));
+		// UltraMine: Algorithmic optimization - reorder conditions for faster evaluation
+		return (type == EnumCreatureType.ambient || SpawnerAnimals.canCreatureTypeSpawnAtLocation(type, world, x, y, z)) &&
+				(!block.isNormalCube() && (block.getMaterial() == type.getCreatureMaterial() || block == Blocks.snow_layer && type == EnumCreatureType.monster));
 	}
 
 	@SuppressWarnings("unchecked")

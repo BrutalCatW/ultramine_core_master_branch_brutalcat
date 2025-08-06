@@ -86,41 +86,6 @@ public class VanillaCommands
 	}
 	
 	@Command(
-			name = "tp",
-			group = "vanilla",
-			aliases = {"tppos", "tpposp", "tpto"},
-			permissions = {"command.vanilla.tp"},
-			syntax = {
-					"<player%dst>",
-					"<player%target> <player%dst>",
-					"<%x> <%y> <%z>",
-					"<world> <%x> <%y> <%z>",
-					"<player%target> <%x> <%y> <%z>",
-					"<player%target> <world> <%x> <%y> <%z>"
-			}
-	)
-	public static void tp(CommandContext context)
-	{
-		EntityPlayerMP target = context.contains("target") ? context.get("target").asPlayer() : context.getSenderAsPlayer();
-		if(context.contains("dst"))
-		{
-			EntityPlayerMP dst = context.get("dst").asPlayer();
-			Teleporter.tpNow(target, dst);
-			context.sendMessage("command.tp.success.player", target.func_145748_c_(), dst.func_145748_c_());
-		}
-		else if(context.contains("x") && context.contains("y") && context.contains("z"))
-		{
-			WorldServer world = context.contains("world") ? context.get("world").asWorld() : target.getServerForPlayer();
-			double x = context.get("x").asCoordinate(target.posX);
-			double y = context.get("y").asCoordinate(target.posY);
-			double z = context.get("z").asCoordinate(target.posZ);
-			Teleporter.tpNow(target, world.provider.dimensionId, x, y, z);
-			context.sendMessage("command.tp.success.coordinate",
-					target.func_145748_c_(), world.getWorldInfo().getWorldName(), x, y, z);
-		}
-	}
-	
-	@Command(
 			name = "difficulty",
 			group = "vanilla",
 			permissions = {"command.vanilla.difficulty"},

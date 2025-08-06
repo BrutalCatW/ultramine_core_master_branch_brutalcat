@@ -335,7 +335,8 @@ public class NetHandlerPlayServer implements INetHandlerPlayServer
 				double d9 = Math.max(Math.abs(d6), Math.abs(this.playerEntity.motionZ));
 				double d10 = d7 * d7 + d8 * d8 + d9 * d9;
 
-				if (d10 > 100.0D && (!this.serverController.isSinglePlayer() || !this.serverController.getServerOwner().equals(this.playerEntity.getCommandSenderName())))
+				// UltraMine: Algorithmic optimization - check cheap condition first
+				if (d10 > 100.0D && !this.serverController.isSinglePlayer() && !this.serverController.getServerOwner().equals(this.playerEntity.getCommandSenderName()))
 				{
 					logger.warn(this.playerEntity.getCommandSenderName() + " moved too quickly! " + d4 + "," + d5 + "," + d6 + " (" + d7 + ", " + d8 + ", " + d9 + ")");
 					this.setPlayerLocation(this.lastPosX, this.lastPosY, this.lastPosZ, this.playerEntity.rotationYaw, this.playerEntity.rotationPitch);

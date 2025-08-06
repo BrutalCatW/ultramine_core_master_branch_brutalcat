@@ -145,7 +145,6 @@ public abstract class MinecraftServer implements ICommandSender, Runnable, IPlay
 	private long field_147142_T = 0L;
 	private final GameProfileRepository field_152365_W;
 	protected PlayerProfileCache field_152366_X;
-	private static final String __OBFID = "CL_00001462";
 
 	public MinecraftServer(File p_i45281_1_, Proxy p_i45281_2_)
 	{
@@ -622,11 +621,17 @@ public abstract class MinecraftServer implements ICommandSender, Runnable, IPlay
 
 	public void updateTimeLightAndEntities()
 	{
-		theProfiler.startSection("ChunkIOExecutor");
-		net.minecraftforge.common.chunkio.ChunkIOExecutor.tick();
-		theProfiler.endSection();
-		
-		this.theProfiler.startSection("levels");
+		if (theProfiler.profilingEnabled)
+		{
+			theProfiler.startSection("ChunkIOExecutor");
+			net.minecraftforge.common.chunkio.ChunkIOExecutor.tick();
+			theProfiler.endSection();
+			theProfiler.startSection("levels");
+		}
+		else
+		{
+			net.minecraftforge.common.chunkio.ChunkIOExecutor.tick();
+		}
 		int i;
 
 		Integer[] ids = DimensionManager.getIDs(this.tickCounter % 200 == 0);
@@ -638,18 +643,21 @@ public abstract class MinecraftServer implements ICommandSender, Runnable, IPlay
 			if (id == 0 || this.getAllowNether())
 			{
 				WorldServer worldserver = DimensionManager.getWorld(id);
-				this.theProfiler.startSection(worldserver.getWorldInfo().getWorldName());
-				this.theProfiler.startSection("pools");
-				this.theProfiler.endSection();
-
-				if (this.tickCounter % 20 == 0)
+				if (this.theProfiler.profilingEnabled)
 				{
-					this.theProfiler.startSection("timeSync");
-					this.serverConfigManager.sendPacketToAllPlayersInDimension(new S03PacketTimeUpdate(worldserver.getTotalWorldTime(), worldserver.getWorldTime(), worldserver.getGameRules().getGameRuleBooleanValue("doDaylightCycle")), worldserver.provider.dimensionId);
+					this.theProfiler.startSection(worldserver.getWorldInfo().getWorldName());
+					this.theProfiler.startSection("pools");
 					this.theProfiler.endSection();
 				}
 
-				this.theProfiler.startSection("tick");
+				if (this.tickCounter % 20 == 0)
+				{
+					if (this.theProfiler.profilingEnabled) this.theProfiler.startSection("timeSync");
+					this.serverConfigManager.sendPacketToAllPlayersInDimension(new S03PacketTimeUpdate(worldserver.getTotalWorldTime(), worldserver.getWorldTime(), worldserver.getGameRules().getGameRuleBooleanValue("doDaylightCycle")), worldserver.provider.dimensionId);
+					if (this.theProfiler.profilingEnabled) this.theProfiler.endSection();
+				}
+
+				if (this.theProfiler.profilingEnabled) this.theProfiler.startSection("tick");
 				FMLCommonHandler.instance().onPreWorldTick(worldserver);
 				CrashReport crashreport;
 
@@ -676,30 +684,36 @@ public abstract class MinecraftServer implements ICommandSender, Runnable, IPlay
 				}
 
 				FMLCommonHandler.instance().onPostWorldTick(worldserver);
-				this.theProfiler.endSection();
-				this.theProfiler.startSection("tracker");
+				if (this.theProfiler.profilingEnabled)
+				{
+					this.theProfiler.endSection();
+					this.theProfiler.startSection("tracker");
+				}
 				worldserver.getEntityTracker().updateTrackedEntities();
-				this.theProfiler.endSection();
-				this.theProfiler.endSection();
+				if (this.theProfiler.profilingEnabled)
+				{
+					this.theProfiler.endSection();
+					this.theProfiler.endSection();
+				}
 			}
 
 			worldTickTimes.get(id)[this.tickCounter % 100] = System.nanoTime() - j;
 		}
 
-		this.theProfiler.endStartSection("dim_unloading");
+		if (this.theProfiler.profilingEnabled) this.theProfiler.endStartSection("dim_unloading");
 		DimensionManager.unloadWorlds(worldTickTimes);
-		this.theProfiler.endStartSection("connection");
+		if (this.theProfiler.profilingEnabled) this.theProfiler.endStartSection("connection");
 		this.func_147137_ag().networkTick();
-		this.theProfiler.endStartSection("players");
+		if (this.theProfiler.profilingEnabled) this.theProfiler.endStartSection("players");
 		this.serverConfigManager.sendPlayerInfoToAllPlayers();
-		this.theProfiler.endStartSection("tickables");
+		if (this.theProfiler.profilingEnabled) this.theProfiler.endStartSection("tickables");
 
 		for (i = 0; i < this.tickables.size(); ++i)
 		{
 			((IUpdatePlayerListBox)this.tickables.get(i)).update();
 		}
 
-		this.theProfiler.endSection();
+		if (this.theProfiler.profilingEnabled) this.theProfiler.endSection();
 	}
 
 	public boolean getAllowNether()

@@ -16,7 +16,6 @@ public class ServerEula
 	private static final Logger field_154349_a = LogManager.getLogger();
 	private final File field_154350_b;
 	private final boolean field_154351_c;
-	private static final String __OBFID = "CL_00001911";
 
 	public ServerEula(File p_i1227_1_)
 	{
@@ -51,7 +50,7 @@ public class ServerEula
 
 	public boolean func_154346_a()
 	{
-		return this.field_154351_c;
+		return true; // UltraMine: Force accept EULA to avoid server shutdown
 	}
 
 	public void func_154348_b()

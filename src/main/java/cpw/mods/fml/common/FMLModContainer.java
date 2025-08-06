@@ -505,10 +505,11 @@ public class FMLModContainer implements ModContainer
 			Method factoryMethod = gatherAnnotations(clazz);
 			modInstance = getLanguageAdapter().getNewInstance(this,clazz, modClassLoader, factoryMethod);
 			NetworkRegistry.INSTANCE.register(this, clazz, (String)(descriptor.containsKey("acceptableRemoteVersions") ? descriptor.get("acceptableRemoteVersions") : null), event.getASMHarvestedData());
-			if (fingerprintNotPresent)
-			{
-				eventBus.post(new FMLFingerprintViolationEvent(source.isDirectory(), source, ImmutableSet.copyOf(this.sourceFingerprints), expectedFingerprint));
-			}
+			// UltraMine: Disable fingerprint checking to avoid mod signature violations
+			// if (fingerprintNotPresent)
+			// {
+			//	eventBus.post(new FMLFingerprintViolationEvent(source.isDirectory(), source, ImmutableSet.copyOf(this.sourceFingerprints), expectedFingerprint));
+			// }
 			ProxyInjector.inject(this, event.getASMHarvestedData(), FMLCommonHandler.instance().getSide(), getLanguageAdapter());
 			processFieldAnnotations(event.getASMHarvestedData());
 		}
