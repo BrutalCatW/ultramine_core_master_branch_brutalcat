@@ -10,7 +10,7 @@ import org.ultramine.server.chunk.ChunkHash;
 import com.google.common.collect.Iterators;
 
 import net.minecraft.world.ChunkCoordIntPair;
-import com.koloboke.collect.set.IntSet;
+import net.openhft.koloboke.collect.set.IntSet;
 
 public class VanillaChunkHashSet implements Set<Long>
 {

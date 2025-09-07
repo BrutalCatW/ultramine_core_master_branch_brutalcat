@@ -67,7 +67,7 @@ import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.world.WorldEvent;
-import com.koloboke.collect.map.IntByteCursor;
+import net.openhft.koloboke.collect.map.IntByteCursor;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -1,7 +1,7 @@
 package net.minecraft.util;
 
-import com.koloboke.collect.map.IntObjMap;
-import com.koloboke.collect.map.hash.HashIntObjMaps;
+import net.openhft.koloboke.collect.map.IntObjMap;
+import net.openhft.koloboke.collect.map.hash.HashIntObjMaps;
 
 import java.util.HashSet;
 import java.util.Set;

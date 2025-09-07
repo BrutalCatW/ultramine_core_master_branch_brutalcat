@@ -58,14 +58,6 @@ repositories {
 		url 'https://mvnrepository.com/'
 	}
 	maven {
-		name 'koloboke-api-jdk8'
-		url 'https://mvnrepository.com/artifact/com.koloboke/koloboke-api-jdk8'
-	}
-	maven {
-		name 'koloboke-impl-jdk8'
-		url 'https://mvnrepository.com/artifact/com.koloboke/koloboke-impl-jdk8'
-	}
-	maven {
 		name 'log4j-api'
 		url 'https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-api'
 	}
@@ -125,7 +117,7 @@ dependencies {
 	compileCommon 'com.typesafe:config:1.2.1'
 	compileCommon 'com.ibm.icu:icu4j-core-mojang:51.2'
 	compileCommon 'com.lmax:disruptor:3.2.1'
-	compileCommon 'com.koloboke:koloboke-api-jdk8:1.0.0'
+	compileCommon 'net.openhft:koloboke-api-jdk8:0.6.8'
 	compileCommon 'com.mojang:authlib:1.5.21'
 
 	compileClient 'com.mojang:realms:1.3.5'
@@ -142,7 +134,7 @@ dependencies {
 
 	compileServer 'jline:jline:2.13', {transitive = false}
 
-	runtimeCommon 'com.koloboke:koloboke-impl-jdk8:1.0.0'
+	runtimeCommon 'net.openhft:koloboke-impl-jdk8:0.6.8'
 	runtimeServer 'mysql:mysql-connector-java:8.0.33'
 
 	testCompile "org.spockframework:spock-core:1.1-groovy-2.4-rc-1"
