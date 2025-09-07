@@ -299,6 +299,11 @@ public class DedicatedServer extends MinecraftServer implements IServer
 		return settings.settings.other.hardcore;
 	}
 
+	public boolean isSpamLogConsole()
+	{
+		return settings.settings.other.spamLagConsole;
+	}
+	
 	protected void finalTick(CrashReport par1CrashReport) {}
 
 	public CrashReport addServerInfoToCrashReport(CrashReport p_71230_1_)
