@@ -75,6 +75,7 @@ public class UltramineServerConfig
 			public boolean splitWorldDirs = true;
 			public boolean recipeCacheEnabled = true;
 			public boolean spamLagConsole = false;
+			public boolean disableRegionFileStackTrace = false;
 		}
 
 		public static class SpawnLocationsConf

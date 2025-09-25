@@ -43,6 +43,7 @@ import org.ultramine.server.event.WorldUpdateObject;
 
 import com.mojang.authlib.GameProfile;
 import org.ultramine.server.util.GlobalExecutors;
+import org.ultramine.server.ConfigurationHandler;
 
 public class UMHooks
 {
@@ -51,6 +52,12 @@ public class UMHooks
 	
 	public static void printStackTrace(Throwable t)
 	{
+		// Check if this is a RegionFile related stacktrace and config disables it
+		if (ConfigurationHandler.getServerConfig().settings.other.disableRegionFileStackTrace && isRegionFileStackTrace())
+		{
+			return; // Skip logging for RegionFile related stacktraces
+		}
+		
 		log.error("Direct Throwable.printStackTrace() call");
 		if(Thread.currentThread().getName().equals("Server thread"))
 		{
@@ -106,6 +113,19 @@ public class UMHooks
 
 		log.error("Invoked here", new Throwable("stacktrace"));
 		log.error("Original stacktrace", t);
+	}
+	
+	private static boolean isRegionFileStackTrace()
+	{
+		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+		for (StackTraceElement element : stackTrace)
+		{
+			if (element.getClassName().contains("RegionFile"))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public static GameProfile readObjectOwner(NBTTagCompound nbt)
