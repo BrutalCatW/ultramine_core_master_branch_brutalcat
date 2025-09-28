@@ -13,7 +13,7 @@ import net.minecraftforge.common.MinecraftForge;
 import org.ultramine.commands.CommandRegistry;
 import org.ultramine.commands.basic.GenWorldCommand;
 import org.ultramine.commands.basic.TechCommands;
-import org.ultramine.commands.basic.VanillaCommands;
+
 import org.ultramine.commands.syntax.DefaultCompleters;
 import org.ultramine.core.economy.service.DefaultHoldingsProvider;
 import org.ultramine.core.economy.service.Economy;
@@ -124,9 +124,6 @@ public class UltramineServerModContainer extends DummyModContainer
 			}
 
 			OpBasedPermissions vanPerms = new OpBasedPermissions();
-			vanPerms.addDefault("command.vanilla.help");
-			vanPerms.addDefault("command.vanilla.msg");
-			vanPerms.addDefault("command.vanilla.reply");
 			services.register(Permissions.class, vanPerms, 0);
 		}
 		catch (Throwable t)
@@ -190,7 +187,6 @@ public class UltramineServerModContainer extends DummyModContainer
 		{
 			e.getServer().getConfigurationManager().getDataLoader().registerPlayerDataExt(PlayerCoreData.class, "core");
 			e.registerArgumentHandlers(DefaultCompleters.class);
-			e.registerCommands(VanillaCommands.class);
 			e.registerCommands(TechCommands.class);
 			e.registerCommands(GenWorldCommand.class);
 
