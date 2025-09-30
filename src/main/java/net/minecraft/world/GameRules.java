@@ -21,6 +21,8 @@ public class GameRules
 		this.addGameRule("commandBlockOutput", "true");
 		this.addGameRule("naturalRegeneration", "true");
 		this.addGameRule("doDaylightCycle", "true");
+		this.addGameRule("doSandFalling", "true");
+		this.addGameRule("doGravelFalling", "true");
 	}
 
 	public void addGameRule(String p_82769_1_, String p_82769_2_)

@@ -3,12 +3,14 @@ package net.minecraft.block;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import java.util.List;
+import java.util.Random;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
+import net.minecraft.world.World;
 
 public class BlockSand extends BlockFalling
 {
@@ -47,5 +49,14 @@ public class BlockSand extends BlockFalling
 	public MapColor getMapColor(int p_149728_1_)
 	{
 		return p_149728_1_ == 1 ? MapColor.dirtColor : MapColor.sandColor;
+	}
+
+	@Override
+	public void updateTick(World p_149674_1_, int p_149674_2_, int p_149674_3_, int p_149674_4_, Random p_149674_5_)
+	{
+		if (!p_149674_1_.isRemote && p_149674_1_.getGameRules().getGameRuleBooleanValue("doSandFalling"))
+		{
+			this.func_149830_m(p_149674_1_, p_149674_2_, p_149674_3_, p_149674_4_);
+		}
 	}
 }
