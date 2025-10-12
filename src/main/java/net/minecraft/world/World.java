@@ -31,6 +31,7 @@ import org.ultramine.server.event.WorldEventProxy;
 import org.ultramine.server.event.WorldUpdateObjectType;
 import org.ultramine.server.internal.LambdaHolder;
 import org.ultramine.server.util.VanillaChunkCoordIntPairSet;
+import org.ultramine.server.util.PlayerSpatialIndex;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockHopper;
@@ -112,6 +113,8 @@ public abstract class World implements IBlockAccess
 	private List addedTileEntityList = new ArrayList();
 	private Set field_147483_b = new HashSet();
 	public List playerEntities = new ArrayList();
+	/** Пространственный индекс для быстрого поиска игроков в радиусе (Ultramine оптимизация) */
+	private final PlayerSpatialIndex playerSpatialIndex = new PlayerSpatialIndex();
 	public List weatherEffects = new ArrayList();
 	private long cloudColour = 16777215L;
 	public int skylightSubtracted;
@@ -1418,6 +1421,12 @@ public abstract class World implements IBlockAccess
 		{
 			((IWorldAccess)this.worldAccesses.get(i)).onEntityCreate(p_72923_1_);
 		}
+
+		// Ultramine: добавляем игрока в пространственный индекс
+		if (p_72923_1_ instanceof EntityPlayer)
+		{
+			updatePlayerSpatialIndex((EntityPlayer)p_72923_1_);
+		}
 	}
 
 	public void onEntityRemoved(Entity p_72847_1_)
@@ -1425,6 +1434,12 @@ public abstract class World implements IBlockAccess
 		for (int i = 0; i < this.worldAccesses.size(); ++i)
 		{
 			((IWorldAccess)this.worldAccesses.get(i)).onEntityDestroy(p_72847_1_);
+		}
+
+		// Ultramine: удаляем игрока из пространственного индекса
+		if (p_72847_1_ instanceof EntityPlayer)
+		{
+			removePlayerFromSpatialIndex((EntityPlayer)p_72847_1_);
 		}
 	}
 
@@ -2205,6 +2220,12 @@ public abstract class World implements IBlockAccess
 				else
 				{
 					p_72866_1_.onUpdate();
+				}
+
+				// Ultramine: обновляем пространственный индекс для игроков
+				if (p_72866_1_ instanceof EntityPlayer)
+				{
+					updatePlayerSpatialIndex((EntityPlayer)p_72866_1_);
 				}
 			}
 			else if(p_72866_1_.isEntityPlayerMP())
@@ -4341,5 +4362,81 @@ public abstract class World implements IBlockAccess
 	public WorldEventProxy getEventProxy()
 	{
 		return eventProxy;
+	}
+
+	// ==============================
+	// ULTRAMINE: Оптимизированные методы поиска игроков
+	// ==============================
+
+	/**
+	 * Получить всех игроков в радиусе от точки (только X/Z).
+	 * ОПТИМИЗИРОВАННЫЙ МЕТОД: использует пространственное индексирование.
+	 *
+	 * Производительность: O(k) вместо O(N), где k << N
+	 * Ожидаемое ускорение: 5-50x при 50+ игроках
+	 *
+	 * @param x координата X центра
+	 * @param z координата Z центра
+	 * @param radius радиус поиска в блоках
+	 * @return список игроков в радиусе
+	 */
+	public List<EntityPlayer> getPlayersInRadius(double x, double z, double radius)
+	{
+		return playerSpatialIndex.getPlayersInRadius(x, z, radius);
+	}
+
+	/**
+	 * Получить всех игроков в радиусе от точки (X/Y/Z).
+	 * ОПТИМИЗИРОВАННЫЙ МЕТОД: использует пространственное индексирование.
+	 *
+	 * @param x координата X центра
+	 * @param y координата Y центра
+	 * @param z координата Z центра
+	 * @param radius радиус поиска в блоках
+	 * @return список игроков в радиусе
+	 */
+	public List<EntityPlayer> getPlayersInRadius(double x, double y, double z, double radius)
+	{
+		return playerSpatialIndex.getPlayersInRadius(x, y, z, radius);
+	}
+
+	/**
+	 * Получить ближайшего игрока к точке.
+	 * ОПТИМИЗИРОВАННЫЙ МЕТОД: улучшенная версия getClosestPlayer.
+	 *
+	 * Использует расширяющийся поиск от центра для раннего выхода.
+	 * Быстрее для случаев, когда ближайший игрок недалеко.
+	 *
+	 * @param x координата X
+	 * @param y координата Y
+	 * @param z координата Z
+	 * @param maxRadius максимальный радиус (-1 для неограниченного)
+	 * @return ближайший игрок или null
+	 */
+	public EntityPlayer getClosestPlayerOptimized(double x, double y, double z, double maxRadius)
+	{
+		return playerSpatialIndex.getClosestPlayer(x, y, z, maxRadius);
+	}
+
+	/**
+	 * Обновляет позицию игрока в пространственном индексе.
+	 * Должен вызываться при движении игрока.
+	 *
+	 * ВНУТРЕННИЙ МЕТОД - автоматически вызывается при обновлении сущностей.
+	 */
+	private void updatePlayerSpatialIndex(EntityPlayer player)
+	{
+		playerSpatialIndex.updatePlayer(player);
+	}
+
+	/**
+	 * Удаляет игрока из пространственного индекса.
+	 * Должен вызываться при отключении игрока или смене мира.
+	 *
+	 * ВНУТРЕННИЙ МЕТОД - автоматически вызывается при удалении сущности.
+	 */
+	private void removePlayerFromSpatialIndex(EntityPlayer player)
+	{
+		playerSpatialIndex.removePlayer(player);
 	}
 }
