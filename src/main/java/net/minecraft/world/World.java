@@ -20,6 +20,7 @@ import org.ultramine.server.WorldConstants;
 
 import static org.ultramine.server.WorldConstants.MAX_BLOCK_COORD;
 
+import org.ultramine.server.chunk.AsyncLightingEngine;
 import org.ultramine.server.chunk.CallbackAddDependency;
 import org.ultramine.server.chunk.ChunkHash;
 import org.ultramine.server.chunk.ChunkProfiler;
@@ -3141,6 +3142,30 @@ public abstract class World implements IBlockAccess
 
 	public boolean func_147451_t(int p_147451_1_, int p_147451_2_, int p_147451_3_)
 	{
+		// Пытаемся использовать асинхронное освещение
+		AsyncLightingEngine asyncEngine = AsyncLightingEngine.instance();
+
+		if (asyncEngine.isEnabled() && !this.isRemote)
+		{
+			boolean scheduledSky = false;
+			boolean scheduledBlock = false;
+
+			if (!this.provider.hasNoSky)
+			{
+				scheduledSky = asyncEngine.scheduleLightUpdate(this, EnumSkyBlock.Sky, p_147451_1_, p_147451_2_, p_147451_3_);
+			}
+
+			scheduledBlock = asyncEngine.scheduleLightUpdate(this, EnumSkyBlock.Block, p_147451_1_, p_147451_2_, p_147451_3_);
+
+			// Если хотя бы одно обновление было запланировано, возвращаем true
+			if (scheduledSky || scheduledBlock)
+			{
+				return true;
+			}
+			// Если очередь переполнена, выполняем синхронно (fallback)
+		}
+
+		// Синхронное выполнение (fallback или когда асинхронное освещение выключено)
 		boolean flag = false;
 
 		if (!this.provider.hasNoSky)

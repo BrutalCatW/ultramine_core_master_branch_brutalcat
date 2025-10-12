@@ -233,6 +233,15 @@ public class UltramineServerModContainer extends DummyModContainer
 			ChunkProfiler.instance().setEnabled(false);
 			((SyncServerExecutorImpl) GlobalExecutors.nextTick()).unregister();
 
+			// Корректно завершаем ExecutorService для загрузки скинов голов
+			net.minecraft.tileentity.TileEntitySkull.shutdownExecutor();
+
+			// Корректно завершаем асинхронный движок освещения
+			org.ultramine.server.chunk.AsyncLightingEngine.instance().shutdown();
+
+			// Корректно завершаем улучшенный асинхронный менеджер сохранения мира
+			org.ultramine.server.chunk.EnhancedAsyncWorldSaver.instance().shutdown();
+
 			if(e.getSide().isServer())
 			{
 				MinecraftServer.getServer().getScheduler().stop();

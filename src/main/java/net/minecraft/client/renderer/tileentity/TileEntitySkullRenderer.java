@@ -62,11 +62,17 @@ public class TileEntitySkullRenderer extends TileEntitySpecialRenderer
 				if (p_152674_7_ != null)
 				{
 					Minecraft minecraft = Minecraft.getMinecraft();
+					// Используем асинхронную загрузку профиля, если он еще не загружен
 					Map map = minecraft.func_152342_ad().func_152788_a(p_152674_7_);
 
-					if (map.containsKey(Type.SKIN))
+					if (map != null && map.containsKey(Type.SKIN))
 					{
 						resourcelocation = minecraft.func_152342_ad().func_152792_a((MinecraftProfileTexture)map.get(Type.SKIN), Type.SKIN);
+					}
+					else if (p_152674_7_.isComplete() && p_152674_7_.getProperties().isEmpty())
+					{
+						// Если профиль пустой, инициируем асинхронную загрузку
+						minecraft.func_152342_ad().func_152790_a(p_152674_7_, null, true);
 					}
 				}
 
