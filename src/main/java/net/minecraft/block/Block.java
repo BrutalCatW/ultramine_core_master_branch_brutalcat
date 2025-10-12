@@ -124,10 +124,37 @@ public class Block
 	protected IIcon blockIcon;
 	private static final String __OBFID = "CL_00000199";
 
-	public final cpw.mods.fml.common.registry.RegistryDelegate<Block> delegate = 
+	// Ultramine: Cached block ID for fast lookups
+	private int cachedBlockId = -1;
+
+	public final cpw.mods.fml.common.registry.RegistryDelegate<Block> delegate =
 			((cpw.mods.fml.common.registry.FMLControlledNamespacedRegistry)blockRegistry).getDelegate(this, Block.class);
+
+	/**
+	 * Ultramine: Fast ID lookup using cached value
+	 * Sets the cached ID for this block (called from registry)
+	 */
+	public void setCachedId(int id)
+	{
+		this.cachedBlockId = id;
+	}
+
+	/**
+	 * Ultramine: Fast ID lookup using cached value
+	 * Gets the cached ID for this block
+	 */
+	public int getCachedId()
+	{
+		return this.cachedBlockId;
+	}
+
 	public static int getIdFromBlock(Block p_149682_0_)
 	{
+		// Ultramine: Use cached ID if available for ~10x faster lookup
+		if (p_149682_0_ != null && p_149682_0_.cachedBlockId != -1)
+		{
+			return p_149682_0_.cachedBlockId;
+		}
 		return blockRegistry.getIDForObject(p_149682_0_);
 	}
 

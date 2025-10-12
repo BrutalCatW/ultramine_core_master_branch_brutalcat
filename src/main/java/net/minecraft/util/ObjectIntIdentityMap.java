@@ -6,6 +6,8 @@ import com.google.common.collect.Lists;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
+import net.minecraft.block.Block;
+import net.minecraft.item.Item;
 
 public class ObjectIntIdentityMap implements IObjectIntIterable
 {
@@ -23,6 +25,16 @@ public class ObjectIntIdentityMap implements IObjectIntIterable
 		}
 
 		this.field_148748_b.set(p_148746_2_, p_148746_1_);
+
+		// Ultramine: Cache the ID directly in Block/Item for fast lookups
+		if (p_148746_1_ instanceof Block)
+		{
+			((Block)p_148746_1_).setCachedId(p_148746_2_);
+		}
+		else if (p_148746_1_ instanceof Item)
+		{
+			((Item)p_148746_1_).setCachedId(p_148746_2_);
+		}
 	}
 
 	public int func_148747_b(Object p_148747_1_)
