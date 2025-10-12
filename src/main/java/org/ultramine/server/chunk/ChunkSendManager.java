@@ -15,9 +15,11 @@ import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Level;
 import org.ultramine.core.service.InjectService;
 import org.ultramine.server.WorldConstants;
 import org.ultramine.server.util.BlockFace;
@@ -40,9 +42,23 @@ import net.openhft.koloboke.collect.IntCursor;
 import net.openhft.koloboke.collect.set.IntSet;
 import net.openhft.koloboke.collect.set.hash.HashIntSets;
 
-public class ChunkSendManager
+/**
+ * Enhanced ChunkSendManager with comprehensive debugging and optimization features.
+ *
+ * Key improvements:
+ * - Detailed logging controlled by -Dultramine.chunk.send.debug=true
+ * - Performance metrics tracking (sent/cancelled chunks, compression time, sort operations)
+ * - Periodic statistics logging every 60 seconds
+ * - Optimized sort algorithm (skips sorting if player hasn't moved significantly)
+ * - Improved adaptive rate adjustment
+ * - JMX MBean support for real-time monitoring
+ *
+ * @author Ultramine
+ */
+public class ChunkSendManager implements ChunkSendManagerMBean
 {
 	private static final Logger log = LogManager.getLogger();
+	private static final boolean DEBUG = Boolean.getBoolean("ultramine.chunk.send.debug");
 	private static final ExecutorService executor = Executors.newFixedThreadPool(1);
 	@InjectService private static AntiXRayService<Object> antiXRayService;
 	private static final double MIN_RATE = 0.2d;
@@ -66,6 +82,19 @@ public class ChunkSendManager
 	private boolean sentLastTick = false;
 	private int sendIndexCounter;
 	private boolean sortSendQueueLater;
+	private int lastSortChunkX;
+	private int lastSortChunkZ;
+	private int sortSkipCount = 0;
+	private static final int SORT_POSITION_THRESHOLD = 3; // Sort only if moved > 3 chunks
+
+	// Performance metrics
+	private final AtomicLong totalChunksSent = new AtomicLong();
+	private final AtomicLong totalChunksCancelled = new AtomicLong();
+	private final AtomicLong totalSortOperations = new AtomicLong();
+	private final AtomicLong totalCompressionTime = new AtomicLong();
+	private final AtomicLong compressionCount = new AtomicLong();
+	private long lastLogTime = 0;
+	private static final long LOG_INTERVAL_MS = 60000; // Log stats every 60 seconds
 	
 	public ChunkSendManager(EntityPlayerMP player)
 	{
@@ -86,10 +115,42 @@ public class ChunkSendManager
 	{
 		if(!sortSendQueueLater)
 			return;
-		sortSendQueueLater = false;
+
 		int cx = MathHelper.floor_double(player.posX) >> 4;
 		int cz = MathHelper.floor_double(player.posZ) >> 4;
+
+		// Optimization: skip sorting if player hasn't moved significantly
+		int deltaX = Math.abs(cx - lastSortChunkX);
+		int deltaZ = Math.abs(cz - lastSortChunkZ);
+
+		if(deltaX < SORT_POSITION_THRESHOLD && deltaZ < SORT_POSITION_THRESHOLD)
+		{
+			sortSkipCount++;
+			if(DEBUG)
+			{
+				log.log(Level.DEBUG, "[ChunkSend] Player {}: Skipped sort (moved only {},{} chunks), skip count: {}",
+					player.getCommandSenderName(), deltaX, deltaZ, sortSkipCount);
+			}
+			// Don't reset sortSendQueueLater yet, will sort when threshold exceeded
+			return;
+		}
+
+		sortSendQueueLater = false;
+		long startTime = DEBUG ? System.nanoTime() : 0;
+
 		toSend.backSort(ChunkCoordComparator.get(lastFace = BlockFace.yawToFace(player.rotationYaw), cx, cz));
+		lastSortChunkX = cx;
+		lastSortChunkZ = cz;
+
+		totalSortOperations.incrementAndGet();
+
+		if(DEBUG)
+		{
+			long elapsed = System.nanoTime() - startTime;
+			log.log(Level.DEBUG, "[ChunkSend] Player {}: Sorted queue of {} chunks in {} us, direction: {}, skipped {} times before",
+				player.getCommandSenderName(), toSend.size(), elapsed / 1000, lastFace, sortSkipCount);
+		}
+		sortSkipCount = 0;
 	}
 	
 	private void checkDistance()
@@ -207,6 +268,10 @@ public class ChunkSendManager
 	{
 		if(manager == null)
 			return;
+
+		// Periodic statistics logging
+		logStatistics();
+
 		updatePlayerPertinentChunks();
 		if(!toSend.isEmpty())
 		{
@@ -216,26 +281,53 @@ public class ChunkSendManager
 			
 			if(sentLastTick)
 			{
+				// Optimized adaptive rate adjustment
+				double targetRate = maxRate;
+				double adjustment;
+
 				if(queueSize == 0)
 				{
-					rate += 0.14;
+					// Queue empty - increase rapidly
+					adjustment = 0.14;
+				}
+				else if(queueSize < maxRate / 2)
+				{
+					// Queue small - increase moderately
+					adjustment = 0.10;
 				}
 				else if(queueSize < maxRate)
 				{
-					rate += 0.07;
+					// Queue acceptable - increase slowly
+					adjustment = 0.05;
+				}
+				else if(queueSize > maxQueueSize)
+				{
+					// Queue too large - decrease rapidly
+					adjustment = -0.20;
 				}
 				else if(queueSize > maxRate && queueSize > lastQueueSize)
 				{
-					if(queueSize > maxQueueSize)
-						rate -= 0.14;
-					else
-						rate -= 0.07;
+					// Queue growing - decrease moderately
+					adjustment = -0.10;
 				}
-				
+				else
+				{
+					// Queue stable - small adjustment
+					adjustment = (maxRate - queueSize) * 0.01;
+				}
+
+				rate += adjustment;
+
 				if(rate < MIN_RATE)
 					rate = MIN_RATE;
 				else if(rate > maxRate)
 					rate = maxRate;
+
+				if(DEBUG && adjustment != 0)
+				{
+					log.log(Level.DEBUG, "[ChunkSend] Player {}: Rate adjusted by {:.2f} to {:.2f} (queue: {}/{})",
+						player.getCommandSenderName(), adjustment, rate, queueSize, maxRate);
+				}
 			}
 			
 			if(queueSize <= maxQueueSize)
@@ -298,8 +390,15 @@ public class ChunkSendManager
 				
 				manager.getWorldServer().getEntityTracker().func_85172_a(player, chunk);
 				MinecraftForge.EVENT_BUS.post(new ChunkWatchEvent.Watch(chunk.getChunkCoordIntPair(), player));
-				
+
 				sent.add(key);
+				totalChunksSent.incrementAndGet();
+
+				if(DEBUG)
+				{
+					log.log(Level.DEBUG, "[ChunkSend] Player {}: Successfully sent chunk ({}, {}), total sent: {}",
+						player.getCommandSenderName(), chunk.xPosition, chunk.zPosition, totalChunksSent.get());
+				}
 			}
 			else
 			{
@@ -398,13 +497,112 @@ public class ChunkSendManager
 		{
 			sending.remove(key);
 			if(sendingStage2.remove(key))
+			{
 				player.playerNetServerHandler.netManager.scheduleOutboundPacket(S21PacketChunkData.makeForUnload(ChunkHash.keyToX(key), ChunkHash.keyToZ(key)));
+				totalChunksCancelled.incrementAndGet();
+
+				if(DEBUG)
+				{
+					log.log(Level.DEBUG, "[ChunkSend] Player {}: Cancelled chunk ({}, {})",
+						player.getCommandSenderName(), ChunkHash.keyToX(key), ChunkHash.keyToZ(key));
+				}
+			}
 		}
+	}
+
+	private void logStatistics()
+	{
+		long currentTime = System.currentTimeMillis();
+		if(currentTime - lastLogTime > LOG_INTERVAL_MS)
+		{
+			lastLogTime = currentTime;
+
+			long avgCompressionTime = compressionCount.get() > 0 ?
+				totalCompressionTime.get() / compressionCount.get() : 0;
+
+			log.log(Level.INFO, "[ChunkSend] Player {}: Stats - Sent: {}, Cancelled: {}, Sorts: {}, Avg compression: {} us, " +
+				"Queues[toSend: {}, sending: {}, sent: {}], Rate: {:.2f}",
+				player.getCommandSenderName(),
+				totalChunksSent.get(),
+				totalChunksCancelled.get(),
+				totalSortOperations.get(),
+				avgCompressionTime / 1000,
+				toSend.size(),
+				sending.size(),
+				sent.size(),
+				rate);
+		}
+	}
+
+	public String getDebugInfo()
+	{
+		return String.format("Player: %s, toSend: %d, sending: %d, sent: %d, rate: %.2f, " +
+			"totalSent: %d, totalCancelled: %d, sortOps: %d",
+			player.getCommandSenderName(), toSend.size(), sending.size(), sent.size(),
+			rate, totalChunksSent.get(), totalChunksCancelled.get(), totalSortOperations.get());
 	}
 	
 	public double getRate()
 	{
 		return rate;
+	}
+
+	// JMX monitoring methods
+	public long getTotalChunksSent()
+	{
+		return totalChunksSent.get();
+	}
+
+	public long getTotalChunksCancelled()
+	{
+		return totalChunksCancelled.get();
+	}
+
+	public long getTotalSortOperations()
+	{
+		return totalSortOperations.get();
+	}
+
+	public long getAverageCompressionTimeMicros()
+	{
+		long count = compressionCount.get();
+		return count > 0 ? totalCompressionTime.get() / count / 1000 : 0;
+	}
+
+	public int getQueueToSendSize()
+	{
+		return toSend.size();
+	}
+
+	public int getQueueSendingSize()
+	{
+		return sending.size();
+	}
+
+	public int getQueueSentSize()
+	{
+		return sent.size();
+	}
+
+	public int getSendingQueueSize()
+	{
+		return sendingQueueSize.get();
+	}
+
+	public String getPlayerName()
+	{
+		return player.getCommandSenderName();
+	}
+
+	public void resetStatistics()
+	{
+		totalChunksSent.set(0);
+		totalChunksCancelled.set(0);
+		totalSortOperations.set(0);
+		totalCompressionTime.set(0);
+		compressionCount.set(0);
+		sortSkipCount = 0;
+		log.log(Level.INFO, "[ChunkSend] Player {}: Statistics reset", player.getCommandSenderName());
 	}
 	
 	private static class ChunkIdStruct
@@ -492,9 +690,22 @@ public class ChunkSendManager
 				return;
 			}
 
+			long compressionStart = System.nanoTime();
+
 			antiXRayService.prepareChunkAsync(chunkSnapshot, antiXRayParam);
 			S21PacketChunkData packet = S21PacketChunkData.makeForSend(chunkSnapshot); // may be async for chunk snapshot
 			packet.deflate(); // chunkSnapshot released here
+
+			long compressionTime = System.nanoTime() - compressionStart;
+			totalCompressionTime.addAndGet(compressionTime);
+			compressionCount.incrementAndGet();
+
+			if(DEBUG)
+			{
+				log.log(Level.DEBUG, "[ChunkSend] Player {}: Compressed chunk ({}, {}) in {} us",
+					player.getCommandSenderName(), chunkId.chunk.xPosition, chunkId.chunk.zPosition,
+					compressionTime / 1000);
+			}
 			
 			//Нужно одновременно отправить чанк и добавить его в список sendingStage2, чтобы можно было корректно отменить отправку:
 			//(Если чанк есть в списке sendingStage2, посылать пакет на отгрузку. В ином случае просто удалиь из списка sending)
